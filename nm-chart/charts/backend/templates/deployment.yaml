@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.global.image_pull_policy }}
+          command:
+            - bash 
+          args: 
+            - "-c" 
+            - "./scripts/init-database-minikube.sh && alembic upgrade head  && uvicorn server.api.main:app --reload --host 0.0.0.0 --port 8000"
+          ports:
+            - name: backend-api
+              containerPort: 8000
+          resources:
+              requests:
+                cpu: {{ .Values.resources.cpu }}
+          env: 
+            - name: AWS_DEFAULT_REGION
+              value: eu-west-1
+            - name: API_RUN_LOCATION
+              value: minikube
+            - name: DOMAIN_NAME
+              value: {{ .Values.global.ingress.hostname }}
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          volumeMounts:
+            - mountPath: /app/localfs
+              name: nm-dataset       
+        - name: housekeeper
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.global.image_pull_policy }}
+          command:
+            - bash 
+          args: 
+            - "-c" 
+            - "python /app/server/compute/housekeeper.py"
+          resources:
+              requests:
+                cpu: 0.1
+          env: 
+            - name: AWS_DEFAULT_REGION
+              value: eu-west-1
+            - name: API_RUN_LOCATION
+              value: minikube
+            - name: DOMAIN_NAME
+              value: {{ .Values.global.ingress.hostname }}
+            - name: PYTHONUNBUFFERED
+              value: "1"                 
+        # - name: backend-task-manager
+        #   image: 671626527153.dkr.ecr.eu-west-1.amazonaws.com/nm:eks-dev
+        #   imagePullPolicy: Always
+        #   args:
+        #     - start-task-manager
+        #   resources:
+        #     requests:
+        #       cpu: 0.1
+      volumes:
+        - name: nm-dataset
+          persistentVolumeClaim:
+            claimName: nm-dataset-claim

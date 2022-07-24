@@ -1,0 +1,34 @@
+backend:
+  replicas: 1
+  resources:
+    cpu: 0.25
+  image:
+    repository: uniframe-dev-backend-local
+    tag: minikube
+  ingress:
+    hostname_prefix: api
+    healthcheck_path: /docs    
+frontend:
+  replicas: 1
+  resources:
+    cpu: 0.25  
+  image:
+    repository: uniframe-dev-frontend-local
+    tag: minikube
+  ingress:
+    hostname_prefix: www
+    healthcheck_path: /    
+doc:
+  replicas: 1
+  resources:
+    cpu: 0.25  
+  image:
+    repository: uniframe-dev-doc-local
+    tag: minikube
+  ingress:
+    hostname_prefix: doc
+    healthcheck_path: /   
+global:
+  ingress:
+    hostname: uniframe-local.nl
+  image_pull_policy: Never

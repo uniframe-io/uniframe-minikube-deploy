@@ -1,0 +1,27 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: {{ .Release.Name }}-doc-deployment
+  labels:
+    app: doc
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: doc
+  template:
+      metadata:
+        labels:
+          app: doc
+      spec:
+        containers:
+          - name: doc
+            image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+            imagePullPolicy: {{ .Values.global.image_pull_policy }}
+            ports:
+              - name: doc-api
+                containerPort: 8082
+            resources:
+              requests:
+                cpu: {{ .Values.resources.cpu }}
